@@ -2,6 +2,8 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 require('dotenv').config();
 
 const app = express();
@@ -11,6 +13,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Supabase connection
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -57,7 +62,41 @@ function requireRole(...allowedRoles) {
   };
 }
 
-// GET all books (member & librarian)
+/**
+ * @swagger
+ * /api/books:
+ *   get:
+ *     summary: Get all books
+ *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all books
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Book'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden
+ */
+
+// GET all books
 app.get('/api/books', jwtAuth, requireRole('member', 'librarian'), async (req, res) => {
     try {
         console.log('Fetching all books...');
@@ -79,7 +118,30 @@ app.get('/api/books', jwtAuth, requireRole('member', 'librarian'), async (req, r
     }
 });
 
-// GET search books by genres (member & librarian)
+/**
+ * @swagger
+ * /api/books/genres/{genres}:
+ *   get:
+ *     summary: Search books by genres
+ *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: genres
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Genre to search for
+ *         example: Fiction
+ *     responses:
+ *       200:
+ *         description: Books matching the genre
+ *       401:
+ *         description: Unauthorized
+ */
+
+// GET search books by genres 
 app.get('/api/books/genres/:genres', jwtAuth, requireRole('member', 'librarian'), async (req, res) => {
     try {
         const { genres } = req.params;
@@ -102,7 +164,30 @@ app.get('/api/books/genres/:genres', jwtAuth, requireRole('member', 'librarian')
     }
 });
 
-// GET search books by year (member & librarian)
+/**
+ * @swagger
+ * /api/books/year/{year}:
+ *   get:
+ *     summary: Search books by year
+ *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: year
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Publication year
+ *         example: 2020
+ *     responses:
+ *       200:
+ *         description: Books from the specified year
+ *       401:
+ *         description: Unauthorized
+ */
+
+// GET search books by year 
 app.get('/api/books/year/:year', jwtAuth, requireRole('member', 'librarian'), async (req, res) => {
     try {
         const { year } = req.params;
@@ -125,7 +210,30 @@ app.get('/api/books/year/:year', jwtAuth, requireRole('member', 'librarian'), as
     }
 });
 
-// GET search books by author (member & librarian)
+/**
+ * @swagger
+ * /api/books/author/{author}:
+ *   get:
+ *     summary: Search books by author
+ *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: author
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Author name to search for
+ *         example: John
+ *     responses:
+ *       200:
+ *         description: Books by the specified author
+ *       401:
+ *         description: Unauthorized
+ */
+
+// GET search books by author
 app.get('/api/books/author/:author', jwtAuth, requireRole('member', 'librarian'), async (req, res) => {
     try {
         const { author } = req.params;
@@ -148,7 +256,41 @@ app.get('/api/books/author/:author', jwtAuth, requireRole('member', 'librarian')
     }
 });
 
-// GET single book by ID (member & librarian)
+/**
+ * @swagger
+ * /api/books/{id}:
+ *   get:
+ *     summary: Get a single book by ID
+ *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Book ID
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: Book details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Book'
+ *       404:
+ *         description: Book not found
+ *       401:
+ *         description: Unauthorized
+ */
+
+// GET single book by ID 
 app.get('/api/books/:id', jwtAuth, requireRole('member', 'librarian'), async (req, res) => {
     try {
         const { id } = req.params;
@@ -175,7 +317,50 @@ app.get('/api/books/:id', jwtAuth, requireRole('member', 'librarian'), async (re
     }
 });
 
-// POST create new book (librarian only)
+/**
+ * @swagger
+ * /api/books:
+ *   post:
+ *     summary: Create a new book (librarian only)
+ *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - genres
+ *               - authors
+ *               - year
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: New Book
+ *               genres:
+ *                 type: string
+ *                 example: Fiction,Drama
+ *               authors:
+ *                 type: string
+ *                 example: John Doe
+ *               year:
+ *                 type: integer
+ *                 example: 2025
+ *     responses:
+ *       201:
+ *         description: Book created successfully
+ *       400:
+ *         description: Missing required fields
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Librarian access only
+ */
+
+// POST create new book
 app.post('/api/books', jwtAuth, requireRole('librarian'), async (req, res) => {
     try {
         const { title, genres, authors, year } = req.body;
@@ -202,7 +387,60 @@ app.post('/api/books', jwtAuth, requireRole('librarian'), async (req, res) => {
     }
 });
 
-// PUT update book (librarian only)
+/**
+ * @swagger
+ * /api/books/{id}:
+ *   put:
+ *     summary: Update a book (librarian only)
+ *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Book ID
+ *         example: 1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - genres
+ *               - authors
+ *               - year
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: Updated Book
+ *               genres:
+ *                 type: string
+ *                 example: Horror
+ *               authors:
+ *                 type: string
+ *                 example: Jane Doe
+ *               year:
+ *                 type: integer
+ *                 example: 2024
+ *     responses:
+ *       200:
+ *         description: Book updated successfully
+ *       400:
+ *         description: Missing required fields
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Librarian access only
+ *       404:
+ *         description: Book not found
+ */
+
+// PUT update book
 app.put('/api/books/:id', jwtAuth, requireRole('librarian'), async (req, res) => {
     try {
         const { id } = req.params;
@@ -236,7 +474,34 @@ app.put('/api/books/:id', jwtAuth, requireRole('librarian'), async (req, res) =>
     }
 });
 
-// DELETE book (librarian only)
+/**
+ * @swagger
+ * /api/books/{id}:
+ *   delete:
+ *     summary: Delete a book (librarian only)
+ *     tags: [Books]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Book ID
+ *         example: 101
+ *     responses:
+ *       200:
+ *         description: Book deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Librarian access only
+ *       404:
+ *         description: Book not found
+ */
+
+// DELETE book
 app.delete('/api/books/:id', jwtAuth, requireRole('librarian'), async (req, res) => {
     try {
         const { id } = req.params;
@@ -264,7 +529,41 @@ app.delete('/api/books/:id', jwtAuth, requireRole('librarian'), async (req, res)
     }
 });
 
-// GET books statistics (member & librarian)
+/**
+ * @swagger
+ * /api/stats:
+ *   get:
+ *     summary: Get books statistics
+ *     tags: [Statistics]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Books statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalBooks:
+ *                       type: integer
+ *                       example: 100
+ *                     oldestYear:
+ *                       type: integer
+ *                       example: 1950
+ *                     newestYear:
+ *                       type: integer
+ *                       example: 2025
+ *       401:
+ *         description: Unauthorized
+ */
+
+// GET books statistics
 app.get('/api/stats', jwtAuth, requireRole('member', 'librarian'), async (req, res) => {
     try {
         const { data, error } = await supabase
