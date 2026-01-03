@@ -5,10 +5,10 @@ services:
     build: .
     container_name: books-api
     ports:
-      - "3000:3000"
+      - "3211:3211"
     environment:
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
       - JWT_SECRET=${JWT_SECRET}
-      - PORT=3000
+      - PORT=3211
     restart: unless-stopped
