@@ -1,4 +1,4 @@
-# Books API
+# Cataloging Service -- Smart Library
 
 Express.js backend API for books data with Supabase and JWT authentication.
 
