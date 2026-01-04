@@ -115,6 +115,8 @@ This will generate JWT tokens for both roles with test commands.
 
 ## API Endpoints
 
+You may access the endpoints by initializing the project on your local device or by accessing http://18223014.tesatepadang.space/
+
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
 | GET | `/api/books` | member, librarian | Get all books |
